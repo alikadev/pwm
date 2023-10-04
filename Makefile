@@ -9,7 +9,7 @@ LD 			:=	gcc
 SRC_C		:=	$(shell find $(D_SRC) -name '*.c')
 OBJ_C		:=	$(subst $(D_SRC), $(D_BUILD), $(SRC_C:%.c=%.c.o))
 
-CFLAGS	 	:=	-Werror -Wall -Wextra -c -std=c11 -I$(D_INCLUDE) $(shell pkg-config --cflags openssl)
+CFLAGS	 	:=	-Werror -Wall -Wextra -Wno-unused-function -c -std=c11 -I$(D_INCLUDE) $(shell pkg-config --cflags openssl)
 LDFLAGS		:=	$(shell pkg-config --libs openssl) -lpthread
 
 .PHONY: all clean debug
