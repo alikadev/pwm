@@ -10,6 +10,8 @@
 
 
 /* CONSTANTS OF PWM */
+#define PWM_NO_INPUT -2
+#define PWM_TOO_LONG -1
 #define PWM_FAILURE 0
 #define PWM_SUCCESS 1
 #define PWM_MAGIC "PWM0"
@@ -38,6 +40,7 @@ static void print_hash(const uint8_t *string)
 
 /* FUNCTION DECLARATION*/
 
+int pwm_readline(char *prompt, char *buff, size_t sz);
 void pwm_hash(uint8_t *hash, const char *password);
 void pwm_create(int argc, char const **argv);
 void pwm_get(int argc, char const **argv);

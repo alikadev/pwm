@@ -8,6 +8,7 @@ extern int errno;
 
 #define PWM_PASSWORD_MIN_LENGTH 8
 #define PWM_PASSWORD_MAX_LENGTH 128
+#define PWM_DESCR_MAX 1024
 
 int main(int argc, char const **argv)
 {
@@ -30,7 +31,7 @@ failure:
 	errorf("No function has beed passed!\n");
 	printf("Usage:\n");
 	printf("  %s create <file>\n", *argv);
-	printf("  %s add <file> <key> \"<descr>\"\n", *argv);
+	printf("  %s add <file> <key> <descr>\n", *argv);
 	//printf("  %s rem <file> <passwd> <key>\n", *argv);
 	//printf("  %s get <file> <passwd>\n", *argv);
 	printf("  %s get <file>\n", *argv);
@@ -87,10 +88,13 @@ void pwm_create(int argc, char const **argv)
 	}
 
 	// Add all the data in the file
+	debugf("Writing the PWM_MAGIC (%s)\n", PWM_MAGIC);
 	fprintf(file, "%s", PWM_MAGIC);
+	debugf("Writing the HASH\n");
 	fprintf(file, "%s", hash);
 
 	// Close the file
+	printf("PWM-File '%s' successfully created\n", filename);
 	fclose(file);
 	return;
 failure:
@@ -207,7 +211,7 @@ void pwm_add(int argc, char const **argv)
 	const char *filename = NULL;
 	char password[PWM_PASSWORD_MAX_LENGTH] = {0};
 	const char *key = NULL;
-	const char *descr = NULL;
+	char descr[PWM_DESCR_MAX] = {0};
 	uint8_t hash[SHA256_DIGEST_LENGTH] = {0};
 	char *keyCipher = NULL;
 	char *descrCipher = NULL;
@@ -215,21 +219,25 @@ void pwm_add(int argc, char const **argv)
 	uint32_t descrCipherLen;
 
 	// Check the arguments
-	if (argc != 5)
+	if (argc != 4)
 	{
 		errorf("Bad arguments for function add!\n");
 		printf("Usage:\n");
-		printf("  %s add <file> <key> <descr>\n\n", *argv);
+		printf("  %s add <file> <key>\n\n", *argv);
 		printf("<file> is the pwm file that will be created.\n");
 		printf("<key> is the id of the element.\n");
-		printf("<descr> contains data about the element.\n");
 		goto failure;
 	}
 
 	// Get the arguments
 	filename = argv[2];
 	key = argv[3];
-	descr = argv[4];
+
+	do {
+		status = pwm_readline("Descr> ", descr, PWM_DESCR_MAX);
+		if (status == PWM_TOO_LONG)
+			errorf("String too long. Max size is %d\n", PWM_DESCR_MAX);
+	} while(status != PWM_SUCCESS);
 
 	status = EVP_read_pw_string_min(
 				password,
@@ -252,17 +260,20 @@ void pwm_add(int argc, char const **argv)
 	debugf("description: %s\n", descr);
 
 	// Check the file format and the hash
+	debugf("Checking file identity\n");
 	status = pwm_check_file_identity(filename, hash);
 	if (status == PWM_FAILURE)
 		goto failure;
 
 	// Encrypt the data
+	debugf("Encrypting the element\n");
 	status = pwm_encrypt_element(
 			hash, SHA256_DIGEST_LENGTH,
 			&keyCipher, &descrCipher,
 			key, descr);
 	if (status == PWM_FAILURE)
 		goto failure;
+	debugf("File identity is OK");
 
 	keyCipherLen = (uint32_t)strlen(keyCipher) + 1;
 	descrCipherLen = (uint32_t)strlen(descrCipher) + 1;
@@ -272,6 +283,7 @@ void pwm_add(int argc, char const **argv)
 	print_hash((uint8_t*)descrCipher);
 
 	// Open the file in append mode
+	debugf("Opening the file '%s'\n", filename);
 	file = fopen(filename, "ab");
 	if (!file)
 	{
@@ -279,14 +291,18 @@ void pwm_add(int argc, char const **argv)
 			filename, strerror(errno));
 		goto failure;
 	}
+	fseek(file, 0, SEEK_END);
 
 	// Write the data into the file
+	debugf("Writing the key...\n");
 	fwrite(&keyCipherLen, sizeof keyCipherLen, 1, file);
 	fputs(keyCipher, file);
+	debugf("Writing the descr...\n");
 	fwrite(&descrCipherLen, sizeof descrCipherLen, 1, file);
 	fputs(descrCipher, file);
 
 	// Finish! :)
+	printf("The element has been successfully inserted\n");
 	free(keyCipher);
 	free(descrCipher);
 	fclose(file);
@@ -346,4 +362,29 @@ failure:
 	if (file)
 		fclose(file);
 	return PWM_FAILURE;
+}
+
+int pwm_readline(char *prompt, char *buff, size_t sz) {
+    int ch, extra;
+
+    // Get line with buffer overrun protection.
+    if (prompt != NULL) {
+        printf ("%s", prompt);
+        fflush (stdout);
+    }
+    if (fgets (buff, sz, stdin) == NULL)
+        return PWM_NO_INPUT;
+
+    // If it was too long, there'll be no newline. In that case, we flush
+    // to end of line so that excess doesn't affect the next call.
+    if (buff[strlen(buff)-1] != '\n') {
+        extra = 0;
+        while (((ch = getchar()) != '\n') && (ch != EOF))
+            extra = 1;
+        return (extra == 1) ? PWM_TOO_LONG : PWM_SUCCESS;
+    }
+
+    // Otherwise remove newline and give string back to caller.
+    buff[strlen(buff)-1] = '\0';
+    return PWM_SUCCESS;
 }
