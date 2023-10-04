@@ -9,6 +9,8 @@ This password manager is a personnal project that can encrypt passwords in a fil
 To use PWM, you just have to open your terminal and execute the pwm program.
 
 ``` console
+pwm help
+pwm version
 pwm create <file> 
 pwm add <file> <key>
 pwm get <file>

@@ -3,13 +3,17 @@ D_SRC		:=	src
 D_INCLUDE 	:=	include
 OUT			?=	pwm
 
+VER_MAJOR   := 0
+VER_MINOR   := 0
+VER_PATCH   := 1
+
 CC 			:=	gcc
 LD 			:=	gcc
 
 SRC_C		:=	$(shell find $(D_SRC) -name '*.c')
 OBJ_C		:=	$(subst $(D_SRC), $(D_BUILD), $(SRC_C:%.c=%.c.o))
 
-CFLAGS	 	:=	-Werror -Wall -Wextra -Wno-unused-function -c -std=c11 -I$(D_INCLUDE) $(shell pkg-config --cflags openssl)
+CFLAGS	 	:=	-Werror -Wall -Wextra -Wno-unused-function -c -std=c11 -I$(D_INCLUDE) $(shell pkg-config --cflags openssl) -DPWM_MAJOR=$(VER_MAJOR) -DPWM_MINOR=$(VER_MINOR) -DPWM_PATCH=$(VER_PATCH)
 LDFLAGS		:=	$(shell pkg-config --libs openssl) -lpthread
 
 .PHONY: all clean debug

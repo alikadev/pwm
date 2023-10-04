@@ -24,17 +24,16 @@ int main(int argc, char const **argv)
 		pwm_rem(argc, argv);
 	else if (strcmp(command, "get") == 0)
 		pwm_get(argc, argv);
+	else if (strcmp(command, "version") == 0)
+		pwm_version();
+	else if (strcmp(command, "help") == 0)
+		pwm_help(argv);
 	else goto failure;
 
 	return 0;
 failure:
 	errorf("No function has beed passed!\n");
-	printf("Usage:\n");
-	printf("  %s create <file>\n", *argv);
-	printf("  %s add <file> <key> <descr>\n", *argv);
-	//printf("  %s rem <file> <passwd> <key>\n", *argv);
-	//printf("  %s get <file> <passwd>\n", *argv);
-	printf("  %s get <file>\n", *argv);
+	printf("Write '%s help' to get help\n", *argv);
 	exit(EXIT_FAILURE);
 	return EXIT_FAILURE;
 }
@@ -387,4 +386,23 @@ int pwm_readline(char *prompt, char *buff, size_t sz) {
     // Otherwise remove newline and give string back to caller.
     buff[strlen(buff)-1] = '\0';
     return PWM_SUCCESS;
+}
+
+void pwm_version(void)
+{
+	printf("PWM version %d.%d.%d\n", 
+		PWM_MAJOR,
+		PWM_MINOR,
+		PWM_PATCH);
+	printf("Supported: %s\n", PWM_MAGIC);
+}
+
+void pwm_help(const char **argv)
+{
+	printf("Usage:\n");
+	printf("  %s help\n", *argv);
+	printf("  %s version\n", *argv);
+	printf("  %s create <file>\n", *argv);
+	printf("  %s add <file> <key> <descr>\n", *argv);
+	printf("  %s get <file>\n", *argv);
 }

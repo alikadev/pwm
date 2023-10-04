@@ -16,6 +16,15 @@
 #define PWM_SUCCESS 1
 #define PWM_MAGIC "PWM0"
 #define PWM_HEADER_SIZE (sizeof(PWM_MAGIC) + SHA256_DIGEST_LENGTH - 1)
+#ifndef PWM_MAJOR
+	#define PWM_MAJOR 0
+#endif
+#ifndef PWM_MINOR
+	#define PWM_MINOR 0
+#endif
+#ifndef PWM_PATCH
+	#define PWM_PATCH 0
+#endif
 
 
 /* HELPER MACROS */
@@ -40,12 +49,15 @@ static void print_hash(const uint8_t *string)
 
 /* FUNCTION DECLARATION*/
 
-int pwm_readline(char *prompt, char *buff, size_t sz);
-void pwm_hash(uint8_t *hash, const char *password);
 void pwm_create(int argc, char const **argv);
 void pwm_get(int argc, char const **argv);
 void pwm_add(int argc, char const **argv);
 void pwm_rem(int argc, char const **argv);
+void pwm_version(void);
+void pwm_help(const char **argv);
+
+int pwm_readline(char *prompt, char *buff, size_t sz);
+void pwm_hash(uint8_t *hash, const char *password);
 int pwm_check_file_identity(
 			const char *filename, 
 			uint8_t *hash);
