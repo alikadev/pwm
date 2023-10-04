@@ -9,9 +9,33 @@ This password manager is a personnal project that can encrypt passwords in a fil
 To use PWM, you just have to open your terminal and execute the pwm program.
 
 ``` console
-pwm create <file> <password>
-pwm add <file> <password> <key> <descr>
-pwm get <file> <password>
+pwm create <file> 
+pwm add <file> <key>
+pwm get <file>
+```
+
+Here's an example:
+
+``` console 
+> pwm → ./pwm create test.pwm
+PWM password> 
+Verifying - PWM password> 
+PWM-File 'test.pwm' successfully created
+> pwm → ./pwm add test.pwm Example  
+Descr> login: test12345
+PWM password> 
+The element has been successfully inserted
+> pwm → ./pwm add test.pwm MyWebsite
+Descr> password: nlfa(Fbr=432Ff    
+PWM password> 
+The element has been successfully inserted
+> pwm → ./pwm get test.pwm 
+PWM password> 
+Example
+login: test12345
+
+MyWebsite
+password: nlfa(Fbr=432Ff
 ```
 
 # Quick Start
