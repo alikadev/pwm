@@ -6,6 +6,8 @@
 
 extern int errno;
 
+#define PWM_PASSWORD_MIN_LENGTH 8
+#define PWM_PASSWORD_MAX_LENGTH 128
 
 int main(int argc, char const **argv)
 {
@@ -27,11 +29,11 @@ int main(int argc, char const **argv)
 failure:
 	errorf("No function has beed passed!\n");
 	printf("Usage:\n");
-	printf("  %s create <file> <passwd>\n", *argv);
-	printf("  %s add <file> <passwd> <key> \"<descr>\"\n", *argv);
+	printf("  %s create <file>\n", *argv);
+	printf("  %s add <file> <key> \"<descr>\"\n", *argv);
 	//printf("  %s rem <file> <passwd> <key>\n", *argv);
 	//printf("  %s get <file> <passwd>\n", *argv);
-	printf("  %s get <file> <passwd> <key>\n", *argv);
+	printf("  %s get <file>\n", *argv);
 	exit(EXIT_FAILURE);
 	return EXIT_FAILURE;
 }
@@ -39,25 +41,35 @@ failure:
 
 void pwm_create(int argc, char const **argv)
 {
+	int status;
 	FILE *file = NULL;
 	const char *filename = NULL;
-	const char *password = NULL;
+	char password[PWM_PASSWORD_MAX_LENGTH] = {0};
 	uint8_t hash[SHA256_DIGEST_LENGTH] = {0};
 
 	// Check the arguments
-	if (argc != 4)
+	if (argc != 3)
 	{
 		errorf("Bad arguments for function create!\n");
 		printf("Usage:\n");
-		printf("  %s create <file> <passwd>\n", *argv);
+		printf("  %s create <file>\n", *argv);
 		printf("<file> is the pwm file that will be created.\n");
-		printf("<passwd> is the file password.\n");
 		goto failure;
 	}
 
 	// Get the arguments
 	filename = argv[2];
-	password = argv[3];
+	status = EVP_read_pw_string_min(
+				password,
+				PWM_PASSWORD_MIN_LENGTH, 
+				PWM_PASSWORD_MAX_LENGTH,
+                "PWM password> ", 
+                1);
+	if (status != 0)
+	{
+		errorf("Fail to read the password\n");
+		return;
+	}
 
 	pwm_hash(hash, password);
 
@@ -91,24 +103,33 @@ void pwm_get(int argc, char const **argv)
 	int status;
 	FILE *file = NULL;
 	const char *filename = NULL;
-	const char *password = NULL;
+	char password[PWM_PASSWORD_MAX_LENGTH] = {0};
 	uint8_t hash[SHA256_DIGEST_LENGTH] = {0};
 
 	// Check the arguments
-	if (argc != 4)
+	if (argc != 3)
 	{
 		errorf("Bad arguments for function get!\n");
 		printf("Usage:\n");
-		printf("  %s get <file> <passwd>\n\n", *argv);
+		printf("  %s get <file>\n\n", *argv);
 		printf("<file> is the pwm file that will be created.\n");
-		printf("<passwd> is the file password.\n");
 
 		goto failure;
 	}
 
 	// Get the arguments
 	filename = argv[2];
-	password = argv[3];
+	status = EVP_read_pw_string_min(
+				password,
+				PWM_PASSWORD_MIN_LENGTH, 
+				PWM_PASSWORD_MAX_LENGTH,
+                "PWM password> ", 
+                0);
+	if (status != 0)
+	{
+		errorf("Fail to read the password\n");
+		return;
+	}
 
 	pwm_hash(hash, password);
 
@@ -184,7 +205,7 @@ void pwm_add(int argc, char const **argv)
 	int status;
 	FILE *file = NULL;
 	const char *filename = NULL;
-	const char *password = NULL;
+	char password[PWM_PASSWORD_MAX_LENGTH] = {0};
 	const char *key = NULL;
 	const char *descr = NULL;
 	uint8_t hash[SHA256_DIGEST_LENGTH] = {0};
@@ -194,13 +215,12 @@ void pwm_add(int argc, char const **argv)
 	uint32_t descrCipherLen;
 
 	// Check the arguments
-	if (argc != 6)
+	if (argc != 5)
 	{
 		errorf("Bad arguments for function add!\n");
 		printf("Usage:\n");
-		printf("  %s add <file> <passwd> <key> \"<descr>\"\n\n", *argv);
+		printf("  %s add <file> <key> <descr>\n\n", *argv);
 		printf("<file> is the pwm file that will be created.\n");
-		printf("<passwd> is the file password.\n");
 		printf("<key> is the id of the element.\n");
 		printf("<descr> contains data about the element.\n");
 		goto failure;
@@ -208,9 +228,20 @@ void pwm_add(int argc, char const **argv)
 
 	// Get the arguments
 	filename = argv[2];
-	password = argv[3];
-	key = argv[4];
-	descr = argv[5];
+	key = argv[3];
+	descr = argv[4];
+
+	status = EVP_read_pw_string_min(
+				password,
+				PWM_PASSWORD_MIN_LENGTH, 
+				PWM_PASSWORD_MAX_LENGTH,
+                "PWM password> ", 
+                0);
+	if (status != 0)
+	{
+		errorf("Fail to read the password\n");
+		return;
+	}
 
 	pwm_hash(hash, password);
 
